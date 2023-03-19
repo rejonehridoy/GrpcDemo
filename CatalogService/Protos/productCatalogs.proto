@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option csharp_namespace = "CatalogService";
+
+package ProductCatalog;
+
+message GrpcProductModel {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int32 stock = 5;
+}
+
+service ProductCatalog {
+  rpc GetProductList (GrpcProductListRequest) returns (GrpcProductList);
+  rpc GetProductDetails(GrpcProductRequest) returns (GrpcProductModel);
+}
+
+message GrpcProductRequest{
+	int32 productId = 1;
+}
+
+message GrpcProductListRequest {
+  int32 pageNumber = 1;
+  int32 pageSize = 2;
+}
+
+message GrpcProductList {
+  repeated GrpcProductModel products = 1;
+  int32 totalCount = 2;
+}
+
+
+
+
+
