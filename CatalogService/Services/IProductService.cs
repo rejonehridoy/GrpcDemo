@@ -8,5 +8,8 @@ namespace CatalogService.Services
     {
         Task<IEnumerable<Product>> GetAllProductsAsync();
         Task<Product> GetProductDetailsById(int productId);
+        Task DeleteProductAsync(Product product);
+        Task<Product> UpdateProductAsync(Product product);
+        Task<Product> CreateProductAsync(Product product);
     }
 }

@@ -10,6 +10,6 @@ namespace ShoppingCartService.Services
         Task<ShoppingCartItem> GetShoppingCartItemByIdAsync(int id);
         Task<ShoppingCartItem> AddNewShoppingCartItemAsync(ShoppingCartItem shoppingCartItem);
         Task DeleteShoppingCartItemByIdAsync(ShoppingCartItem shoppingCartItem);
-        Task UpdateShoppingCartItemAsync(ShoppingCartItem shoppingCartItem);
+        Task<ShoppingCartItem> UpdateShoppingCartItemAsync(ShoppingCartItem shoppingCartItem);
     }
 }

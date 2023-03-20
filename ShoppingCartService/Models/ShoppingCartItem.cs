@@ -1,7 +1,12 @@
-﻿namespace ShoppingCartService.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ShoppingCartService.Models
 {
     public class ShoppingCartItem
     {
+        [Key]
+        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public int CustomerId { get; set; }
         public int ProductId { get; set; }

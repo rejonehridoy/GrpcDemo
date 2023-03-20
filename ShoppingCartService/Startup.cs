@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using ShoppingCartService.Data;
 using ShoppingCartService.DataClient.Grpc;
 using ShoppingCartService.Services;
 using System;
@@ -30,6 +32,8 @@ namespace ShoppingCartService
         {
 
             services.AddControllers();
+            services.AddDbContext<ApplicationDbContext>(item => item.UseSqlServer(Configuration.GetConnectionString("ShoppingCart")));
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddScoped<IProductCatalogDataClient, ProductCatalogDataClient>();
             services.AddScoped<IShoppingCartItemService, ShoppingCartItemService>();
