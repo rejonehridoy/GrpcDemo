@@ -17,15 +17,39 @@ namespace ShoppingCartService.Services
             _productCatalogDataClient = productCatalogDataClient;
             _shoppingCartItemRepository = shoppingCartItemRepository;
         }
-        public async Task<ShoppingCartItem> AddNewShoppingCartItemAsync(ShoppingCartItem shoppingCartItem)
+        public async Task<GenericResponseModel<ShoppingCartItem>> AddNewShoppingCartItemAsync(ShoppingCartItem shoppingCartItem)
         {
-            var product =  await _productCatalogDataClient.GetProductDetailsByIdAsync(shoppingCartItem.ProductId);
+            var responseModel = new GenericResponseModel<ShoppingCartItem>();
+            var grpcResponseModel =  await _productCatalogDataClient.GetProductDetailsByIdAsync(shoppingCartItem.ProductId);
+
+            if (!grpcResponseModel.Success)
+            {
+                responseModel.ErrorList.AddRange(grpcResponseModel.ErrorList);
+                return responseModel;
+            }
+            var product = grpcResponseModel.Data;
+
             if(product is not null)
             {
+                if (product.Stock - shoppingCartItem.quantity < 0)
+                {
+                    responseModel.ErrorList.Add("Not enough stock");
+                    return responseModel;
+                }
                 shoppingCartItem.Price = product.Price;
+                grpcResponseModel = await _productCatalogDataClient.UpdateProductStockAsync(shoppingCartItem.ProductId, shoppingCartItem.quantity);
+                if (!grpcResponseModel.Success)
+                {
+                    responseModel.ErrorList.AddRange(grpcResponseModel.ErrorList);
+                    return responseModel;
+                }
+                await _shoppingCartItemRepository.InsertAsync(shoppingCartItem);
+                responseModel.Data = shoppingCartItem;
+                responseModel.Success = true;
+                return responseModel;
             }
-            await _shoppingCartItemRepository.InsertAsync(shoppingCartItem);
-            return shoppingCartItem;
+            responseModel.ErrorList.Add("Product is null");
+            return responseModel;
         }
 
         public async Task DeleteShoppingCartItemByIdAsync(ShoppingCartItem shoppingCartItem)
@@ -44,10 +68,34 @@ namespace ShoppingCartService.Services
             return item;
         }
 
-        public async Task<ShoppingCartItem> UpdateShoppingCartItemAsync(ShoppingCartItem shoppingCartItem)
+        public async Task<GenericResponseModel<ShoppingCartItem>> UpdateShoppingCartItemAsync(int itemId, int Quanttiy)
         {
+            var responseModel = new GenericResponseModel<ShoppingCartItem>();
+            var shoppingCartItem = await GetShoppingCartItemByIdAsync(itemId);
+            if(shoppingCartItem is not null)
+            {
+                var newQuantity = Quanttiy - shoppingCartItem.quantity;
+                if(newQuantity != 0)
+                {
+                    var grpcResponseModel = await _productCatalogDataClient.UpdateProductStockAsync(shoppingCartItem.ProductId, newQuantity);
+                    if (!grpcResponseModel.Success)
+                    {
+                        responseModel.ErrorList.AddRange(grpcResponseModel.ErrorList);
+                        return responseModel;
+                    }
+                }
+
+            }
+            else
+            {
+                responseModel.ErrorList.Add("$No shopping cart item is found of id: {itemId}");
+                return responseModel;
+            }
+            shoppingCartItem.quantity = Quanttiy;
             await _shoppingCartItemRepository.UpdateAsync(shoppingCartItem);
-            return shoppingCartItem;
+            responseModel.Success = true;
+            responseModel.Data = shoppingCartItem;
+            return responseModel;
         }
     }
 }

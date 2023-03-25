@@ -23,37 +23,84 @@ namespace ShoppingCartService.DataClient.Grpc
             client = new ProductCatalog.ProductCatalogClient(channel);
         }
 
-        public async Task<IEnumerable<Product>> GetProductListAsync()
+        public async Task<GrpcResponseModel<IEnumerable<Product>>> GetProductListAsync()
         {
             var request = new GrpcProductListRequest { PageNumber = 1, PageSize = 5 };
+            var responseModel = new GrpcResponseModel<IEnumerable<Product>>();
             try
             {
                 var reply = await client.GetProductListAsync(request);
-                
-                return _mapper.Map<IEnumerable<Product>>(reply.Products);
+                if(reply is null)
+                {
+                    responseModel.ErrorList.Add("Null result is found from grpc server");
+                    return responseModel;
+                }
+                if(reply.TotalCount == 0)
+                {
+                    responseModel.ErrorList.Add("No Products is found from Catalog");
+                    return responseModel;
+                }
+                responseModel.Data = _mapper.Map<IEnumerable<Product>>(reply.Products);
+                responseModel.Success = true;
+
+                return responseModel;
             }
             catch (Exception ex)
             {
+                responseModel.ErrorList.Add($"Couldnot call GRPC Server {ex.Message}");
                 Console.WriteLine($"--> Couldnot call GRPC Server {ex.Message}");
-                return null;
+                return responseModel;
             }
 
         }
 
-        public async Task<Product> GetProductDetailsByIdAsync(int productId)
+        public async Task<GrpcResponseModel<Product>> GetProductDetailsByIdAsync(int productId)
         {
             var request = new GrpcProductRequest { ProductId = productId };
+            var responseModel = new GrpcResponseModel<Product>();
             try
             {
                 var reply = await client.GetProductDetailsAsync(request);
-                return _mapper.Map<Product>(reply);
+                if(reply is null)
+                {
+                    responseModel.ErrorList.Add($"No product is found with id: {productId}");
+                    return responseModel;
+                }
+                responseModel.Data = _mapper.Map<Product>(reply);
+                responseModel.Success = true;
+                return responseModel;
             }
             catch(Exception ex)
             {
+                responseModel.ErrorList.Add($"Couldnot call GRPC Server {ex.Message}");
                 Console.WriteLine($"--> Couldnot call GRPC Server {ex.Message}");
-                return null;
+                return responseModel;
             }
 
+        }
+
+        public async Task<GrpcResponseModel<Product>> UpdateProductStockAsync(int productId, int quantity)
+        {
+            var request = new GrpcProductStockUpdateRequst { ProductId = productId, Quantity = quantity };
+            var responseModel = new GrpcResponseModel<Product>();
+            try
+            {
+                var reply = await client.UpdateProuctStockAsync(request);
+                if (reply is null)
+                {
+                    responseModel.ErrorList.Add($"No product is found with id: {productId}");
+                    return responseModel;
+                }
+                responseModel.Data = _mapper.Map<Product>(reply);
+                responseModel.Success = true;
+                return responseModel;
+            }
+            catch (Exception ex)
+            {
+                responseModel.ErrorList.Add($"Couldnot call GRPC Server {ex.Message}");
+                Console.WriteLine($"--> Couldnot call GRPC Server {ex.Message}");
+                return responseModel;
+            }
         }
     }
 }

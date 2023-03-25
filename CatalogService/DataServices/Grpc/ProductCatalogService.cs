@@ -36,5 +36,15 @@ namespace CatalogService.DataServices.Grpc
                 return null;
             return _mapper.Map<GrpcProductModel>(product);
         }
+
+        public override async Task<GrpcProductModel> UpdateProuctStock(GrpcProductStockUpdateRequst request, ServerCallContext context)
+        {
+            var product = await _productService.GetProductDetailsById(request.ProductId);
+            if (product is null)
+                return null;
+            product.Stock = product.Stock - request.Quantity;
+            await _productService.UpdateProductAsync(product);
+            return _mapper.Map<GrpcProductModel>(product);
+        }
     }
 }

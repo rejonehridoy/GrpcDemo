@@ -27,32 +27,53 @@ namespace ShoppingCartService.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ShoppingCartItemReadDto>>> GetAll()
+        public async Task<ActionResult<GenericResponseModel<IEnumerable<ShoppingCartItemReadDto>>>> GetAll()
         {
+            var model = new GenericResponseModel<IEnumerable<ShoppingCartItemReadDto>>();
             var shoppingCartItems = await _shoppingCartItemService.GetAllShoppingCartItemsAsync();
             if (shoppingCartItems is null && shoppingCartItems.ToList().Count == 0)
-                NotFound("No Shopping cart item found");
-            return Ok(_mapper.Map<IEnumerable<ShoppingCartItemReadDto>>(shoppingCartItems));
+            {
+                model.ErrorList.Add("No Shopping cart item found");
+                return Ok(model);
+            }
+            model.Data = _mapper.Map<IEnumerable<ShoppingCartItemReadDto>>(shoppingCartItems);
+            model.Success = true;
+            return Ok(model);
         }
 
         [HttpGet("id")]
-        public async Task<ActionResult<ShoppingCartItemReadDto>> Get(int id)
+        public async Task<ActionResult<GenericResponseModel<ShoppingCartItemReadDto>>> Get(int id)
         {
+            var model = new GenericResponseModel<ShoppingCartItemReadDto>();
             var shoppingCartItem = await _shoppingCartItemService.GetShoppingCartItemByIdAsync(id);
             if (shoppingCartItem == null)
-                return NotFound();
-
-            return Ok(_mapper.Map<ShoppingCartItemReadDto>(shoppingCartItem));
+            {
+                model.ErrorList.Add($"Shopping cart item is not found of id: {id}");
+                return Ok(model);
+            }
+            model.Data = _mapper.Map<ShoppingCartItemReadDto>(shoppingCartItem);
+            model.Success = true;
+            return Ok(model);
         }
 
 
         [HttpPost]
-        public async Task<ActionResult<ShoppingCartItemReadDto>> AddShoppingCartItem(ShoppingCartItemCreateDto cartItemCreateDto)
+        public async Task<ActionResult<GenericResponseModel<ShoppingCartItemReadDto>>> AddShoppingCartItem(ShoppingCartItemCreateDto cartItemCreateDto)
         {
+            var model = new GenericResponseModel<ShoppingCartItemReadDto>();
+            if (cartItemCreateDto.Quantity <= 0)
+                return BadRequest("Quantity can be 0 or ngative");
             var newItem = _mapper.Map<ShoppingCartItem>(cartItemCreateDto);
-            var insertedItem = await _shoppingCartItemService.AddNewShoppingCartItemAsync(newItem);
+            var responseModel = await _shoppingCartItemService.AddNewShoppingCartItemAsync(newItem);
 
-            return Ok(_mapper.Map<ShoppingCartItemReadDto>(insertedItem));
+            if (!responseModel.Success)
+            {
+                model.ErrorList.AddRange(responseModel.ErrorList);
+                return Ok(model);
+            }
+            model.Data = _mapper.Map<ShoppingCartItemReadDto>(responseModel.Data);
+            responseModel.Success = true;
+            return Ok(model);
         }
 
         [HttpDelete("itemId")]
@@ -66,32 +87,43 @@ namespace ShoppingCartService.Controllers
         }
 
         [HttpPut("{itemId}/{quantity}")]
-        public async Task<ActionResult<ShoppingCartItemReadDto>> UpdateQuantity(int itemId, int quantity)
+        public async Task<ActionResult<GenericResponseModel<ShoppingCartItemReadDto>>> UpdateQuantity(int itemId, int quantity)
         {
-            var item = await _shoppingCartItemService.GetShoppingCartItemByIdAsync(itemId);
-            if (item is null)
-                NotFound($"Shopping cart item is not found of id: {itemId}");
-            item.quantity = quantity;
-            await _shoppingCartItemService.UpdateShoppingCartItemAsync(item);
-            return Ok(_mapper.Map<ShoppingCartItemReadDto>(item));
+            var model = new GenericResponseModel<ShoppingCartItemReadDto>();
+            if (quantity <= 0)
+                return BadRequest("Quantity can be 0 or ngative");
+            var responseModel = await _shoppingCartItemService.UpdateShoppingCartItemAsync(itemId, quantity);
+            if (!responseModel.Success)
+            {
+                model.ErrorList.AddRange(responseModel.ErrorList);
+                return Ok(model);
+            }
+            model.Data = _mapper.Map<ShoppingCartItemReadDto>(responseModel.Data);
+            model.Success = true;
+
+            return Ok(model);
         }
 
         [HttpGet("getProductPrice/{productId}")]
-        public async Task<ActionResult<Product>> GetProductPrice(int productId)
+        public async Task<ActionResult<GenericResponseModel<Product>>> GetProductPrice(int productId)
         {
-            var product = await _productCatalogDataClient.GetProductDetailsByIdAsync(productId);
-            if (product is null)
-                return NotFound($"No Product is found of id: {productId}");
-            return Ok(product);
+            var responseModel = await _productCatalogDataClient.GetProductDetailsByIdAsync(productId);
+            var model = new GenericResponseModel<Product>();
+            model.Data = responseModel.Data;
+            model.ErrorList = responseModel.ErrorList;
+            model.Success = responseModel.Success;
+            return Ok(model);
         }
 
         [HttpGet("getCatalogs")]
-        public async Task<ActionResult<IEnumerable<Product>>> GetCatalogs()
+        public async Task<ActionResult<GenericResponseModel<IEnumerable<Product>>>> GetCatalogs()
         {
-            var productList = (await _productCatalogDataClient.GetProductListAsync()).ToList();
-            if (productList is null || productList.Count <= 0)
-                return NotFound();
-            return Ok(productList);
+            var model = new GenericResponseModel<IEnumerable<Product>>();
+            var grpcResponseModel = await _productCatalogDataClient.GetProductListAsync();
+            model.Data = grpcResponseModel.Data;
+            model.Success = grpcResponseModel.Success;
+            model.ErrorList = grpcResponseModel.ErrorList;
+            return Ok(model);
         }
     }
 }

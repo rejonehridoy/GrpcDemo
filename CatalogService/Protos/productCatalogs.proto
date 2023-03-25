@@ -15,6 +15,7 @@ message GrpcProductModel {
 service ProductCatalog {
   rpc GetProductList (GrpcProductListRequest) returns (GrpcProductList);
   rpc GetProductDetails(GrpcProductRequest) returns (GrpcProductModel);
+  rpc UpdateProuctStock(GrpcProductStockUpdateRequst) returns (GrpcProductModel);
 }
 
 message GrpcProductRequest{
@@ -29,6 +30,11 @@ message GrpcProductListRequest {
 message GrpcProductList {
   repeated GrpcProductModel products = 1;
   int32 totalCount = 2;
+}
+
+message GrpcProductStockUpdateRequst {
+	int32 productId = 1;
+	int32 quantity = 2;
 }
 
 

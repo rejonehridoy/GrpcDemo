@@ -8,8 +8,8 @@ namespace ShoppingCartService.Services
     {
         Task<IEnumerable<ShoppingCartItem>> GetAllShoppingCartItemsAsync();
         Task<ShoppingCartItem> GetShoppingCartItemByIdAsync(int id);
-        Task<ShoppingCartItem> AddNewShoppingCartItemAsync(ShoppingCartItem shoppingCartItem);
+        Task<GenericResponseModel<ShoppingCartItem>> AddNewShoppingCartItemAsync(ShoppingCartItem shoppingCartItem);
         Task DeleteShoppingCartItemByIdAsync(ShoppingCartItem shoppingCartItem);
-        Task<ShoppingCartItem> UpdateShoppingCartItemAsync(ShoppingCartItem shoppingCartItem);
+        Task<GenericResponseModel<ShoppingCartItem>> UpdateShoppingCartItemAsync(int itemId, int Quanttiy);
     }
 }

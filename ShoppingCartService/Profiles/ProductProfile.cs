@@ -8,6 +8,7 @@ namespace ShoppingCartService.Profiles
         public ProductProfile()
         {
             CreateMap<GrpcProductModel, Product>();
+            CreateMap<GrpcResponseModel<Product>, GenericResponseModel<Product>>();
         }
     }
 }

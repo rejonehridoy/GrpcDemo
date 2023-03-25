@@ -6,7 +6,8 @@ namespace ShoppingCartService.DataClient.Grpc
 {
     public interface IProductCatalogDataClient
     {
-        Task<IEnumerable<Product>> GetProductListAsync();
-        Task<Product> GetProductDetailsByIdAsync(int productId);
+        Task<GrpcResponseModel<IEnumerable<Product>>> GetProductListAsync();
+        Task<GrpcResponseModel<Product>> GetProductDetailsByIdAsync(int productId);
+        Task<GrpcResponseModel<Product>> UpdateProductStockAsync(int productId, int quantity);
     }
 }
